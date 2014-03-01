@@ -170,11 +170,10 @@ describe("CRUD Operations", function () {
                             callback: function () {
                                 Person.load(id, {
                                     callback: function (record, operation) {
-                                        expect(record).toBeUndefined();
+                                        expect(record).toBe(null);
                                         done();
                                     }
                                 });
-
                             }
                         });
                     }
