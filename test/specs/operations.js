@@ -9,7 +9,7 @@ describe("CRUD Operations", function () {
     dbName = 'sencha_couch_test';
 
     Ext.define('Person', {
-        extend: 'CouchDB.data.Model',
+        extend: 'CouchDB.data.NestedModel',
         fields: [
             {
                 name: 'name',
@@ -18,8 +18,16 @@ describe("CRUD Operations", function () {
             {
                 name: 'age',
                 type: 'int'
+            },
+            {
+                name: '_id',
+                type: 'string'
+            },{
+                name: '_rev',
+                type: 'string'
             }
         ],
+        idProperty: '_id',
         hasMany: {inner: true, model: 'Dog', name: 'dogs'},
         proxy: {
             type: 'couchdb',
