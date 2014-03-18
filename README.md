@@ -15,7 +15,7 @@ CouchDB Compatible databases(that i know of):
 
 Running The Specs
 -----------------
-Intructions coming soon...
+Instructions coming soon...
 I use pouchdb and pouchdb-server on node.js
 
 Acknowledgements
