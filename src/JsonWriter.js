@@ -73,5 +73,25 @@ Ext.define('CouchDB.data.Writer', {
         }
 
         return data;
+    },
+    writeValue: function(data, field, record){
+        var name = field.mapping || field[this.nameProperty],
+            dateFormat = this.dateFormat || field.dateWriteFormat || field.dateFormat,
+            value = record.get(field.name);
+
+         debugger;
+        // Allow the nameProperty to yield a numeric value which may be zero.
+        // For example, using a field's numeric mapping to write an array for output.
+        if (name == null) {
+            name = field.name;
+        }
+
+        if (field.serialize) {
+            data[name] = field.serialize(value, record);
+        } else if (field.type === Ext.data.Types.DATE && dateFormat && Ext.isDate(value)) {
+            data[name] = Ext.Date.format(value, dateFormat);
+        } else {
+            data[name] = value;
+        }
     }
 });

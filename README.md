@@ -8,7 +8,7 @@ CouchDB Compatible databases(that i know of):
 
 - CouchDB (duh)
 - Cloudant
-- PouchDB
+- PouchDB (using pouchdb-server)
 - Couchbase Lite
 
 **NOTE**: SenchaCouchDBExtJS has been tested with Ext JS 4.2.2
