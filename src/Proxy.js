@@ -54,8 +54,9 @@ Ext.define('CouchDB.data.Proxy', {
         } finally {
             this.appendId = true;
             this.api.read = this.restUrl;
-            // The proxy should not keep the 'include_docs' parameter around for subsequent requests.
-            Ext.destroyMembers(this.extraParams, 'include_docs');
+            
+            //clear extraParams
+            this.extraParams = {}
         }
     },
 

@@ -79,7 +79,6 @@ Ext.define('CouchDB.data.Writer', {
             dateFormat = this.dateFormat || field.dateWriteFormat || field.dateFormat,
             value = record.get(field.name);
 
-         debugger;
         // Allow the nameProperty to yield a numeric value which may be zero.
         // For example, using a field's numeric mapping to write an array for output.
         if (name == null) {
