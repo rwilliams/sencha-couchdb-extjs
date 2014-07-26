@@ -104,8 +104,8 @@ Ext.define('CouchDB.data.Proxy', {
             Ext.apply(this.extraParams, { 'rev': operation.getRecords()[0].get('_rev') });
             this.callParent(arguments);
         } finally {
-            // The proxy should not keep the 'rev' parameter around for subsequent requests.
-            Ext.destroyMembers(this.extraParams, 'rev');
+            //clear extraParams
+            this.extraParams = {}
         }
     }
 });
