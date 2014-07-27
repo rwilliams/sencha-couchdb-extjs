@@ -56,7 +56,9 @@ Ext.define('CouchDB.data.Proxy', {
             this.api.read = this.restUrl;
             
             //clear extraParams
-            this.extraParams = {}
+            for (var prop in this.extraParams) {
+                delete this.extraParams[prop];
+            }
         }
     },
 
@@ -106,7 +108,9 @@ Ext.define('CouchDB.data.Proxy', {
             this.callParent(arguments);
         } finally {
             //clear extraParams
-            this.extraParams = {}
+            for (var prop in this.extraParams) {
+                delete this.extraParams[prop];
+            }
         }
     }
 });
