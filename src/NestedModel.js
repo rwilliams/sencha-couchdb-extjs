@@ -54,5 +54,5 @@ Ext.define('CouchDB.data.Model', {
             operation.execute();
         }
         return operation;
-    },
+    }
 });

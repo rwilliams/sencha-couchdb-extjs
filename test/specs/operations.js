@@ -30,6 +30,7 @@ describe("CRUD Operations", function () {
         ],
         appendId: true,
         idProperty: '_id',
+        hasMany: ['Dog'],
         proxy: {
             type: 'couchdb',
             databaseUrl: dbUrl,
@@ -38,22 +39,39 @@ describe("CRUD Operations", function () {
 
     });
 
-    //Ext.define('Dog', {
-    //    extend: 'Ext.data.Model',
-    //    validators: [{type: 'presence', field: 'name'}],
-    //    fields: [
-    //        {
-    //            name: 'name',
-    //            type: 'string',
-    //            mapping: 'first_name'
-    //        },
-    //        {
-    //            name: 'color',
-    //            type: 'string'
-    //        }
-    //    ],
-    //    belongsTo: ['Person']
-    //});
+    Ext.define('Dog', {
+        extend: 'Ext.data.Model',
+        validators: [{type: 'presence', field: 'name'}],
+        fields: [
+            {
+                name: 'name',
+                type: 'string',
+                mapping: 'first_name'
+            },
+            {
+                name: 'color',
+                type: 'string'
+            },
+
+        ],
+        hasMany: ['Cat']
+    });
+    Ext.define('Cat', {
+        extend: 'Ext.data.Model',
+        validators: [{type: 'presence', field: 'name'}],
+        fields: [
+            {
+                name: 'name',
+                type: 'string',
+                mapping: 'first_name'
+            },
+            {
+                name: 'color',
+                type: 'string'
+            },
+
+        ]
+    });
     //
     store = Ext.create('Ext.data.Store', {
         storeId: 'testStore',
@@ -102,7 +120,7 @@ describe("CRUD Operations", function () {
              }
          });
      });
-
+//
     it('can update an existing Model object', function (done) {
         var id,
             rev;
@@ -145,7 +163,7 @@ describe("CRUD Operations", function () {
             }
         });
     });
-// //
+//// //
      it('can delete a Model object', function (done) {
          var id,
              person = new Person({ name: 'Ralph', age: 32 });
@@ -173,62 +191,70 @@ describe("CRUD Operations", function () {
              }
          });
      });
-// //
-//     it('can load all Model objects using a Store', function (done) {
-//         var person1 = new Person({ name: 'Ralph', age: 33 }),
-//             person2 = Ext.create('Person', { name: 'Jane', age: 43 }),
-//             person3 = Ext.create('Person', { name: 'David', age: 53 }),
-//             allPeople = 0,
-//             addPerson;
-//
-//         person1.save({
-//             callback: function (person, request) {
-//                 store.add(person);
-//                 addPerson();
-//             }
-//         });
-//
-//         person2.save({
-//             callback: function (person, request) {
-//                 store.add(person);
-//                 addPerson();
-//             }
-//         });
-//
-//         person3.save({
-//             callback: function (person, request) {
-//                 store.add(person);
-//                 addPerson();
-//             }
-//         });
-//
-//         addPerson = function () {
-//             allPeople++;
-//             if (allPeople === 3) {
-//                 expect(store.getRange().length).toBe(3);
-//                 done();
-//             }
-//         };
-//     });
+//// //
+     it('can load all Model objects using a Store', function (done) {
+         var person1 = new Person({ name: 'Ralph', age: 33 }),
+             person2 = Ext.create('Person', { name: 'Jane', age: 43 }),
+             person3 = Ext.create('Person', { name: 'David', age: 53 }),
+             allPeople = 0,
+             addPerson;
 
-//     it('can read and write nested data', function (done) {
-//         var person = new Person({ name: 'Ralph', age: 30 }),
-//             dog = new Dog({color: 'Yellow', name: 'Fido'});
-//         person.dogs().add(dog);
-//         person.save({
-//             callback: function (person, request) {
-//                 Person.load(person.getId(), {
-//                     callback: function (person, operation) {
-//                         //debugger;
-//                         expect(person.dogs().first().get('color')).toBe('Yellow');
-//                         expect(person.dogs().first().get('name')).toBe('Fido');
-//                         done();
-//                     }
-//                 });
-//                 //done();
-//             }
-//         });
-//     });
+         person1.save({
+             success: function (person, request) {
+                 store.add(person);
+                 addPerson();
+             }
+         });
+
+         person2.save({
+             success: function (person, request) {
+                 store.add(person);
+                 addPerson();
+             }
+         });
+
+         person3.save({
+             success: function (person, request) {
+                 store.add(person);
+                 addPerson();
+             }
+         });
+
+         addPerson = function () {
+             allPeople++;
+             if (allPeople === 3) {
+                 expect(store.getRange().length).toBe(3);
+                 done();
+             }
+         };
+     });
+
+     it('can read and write nested data', function (done) {
+         var person = new Person({ name: 'Ralph', age: 30 }),
+             dog = new Dog({color: 'Yellow', name: 'Fido'}),
+             cat = new Cat({color: 'Brown', name: 'Felix'});
+
+         dog.cats().add(cat);
+         person.dogs().add(dog);
+         person.save({
+             success: function (person, request) {
+                 Person.load(person.getId(), {
+                     callback: function (person, operation) {
+                         var dog,
+                             cat;
+                         dog = person.dogs().getAt(0);
+                         cat = dog.cats().getAt(0);
+                         expect(dog.get('color')).toBe('Yellow');
+                         expect(dog.get('name')).toBe('Fido');
+                         expect(cat.get('color')).toBe('Brown');
+                         expect(cat.get('name')).toBe('Felix');
+                         done();
+                     }
+                 });
+                 //done();
+             }
+         });
+     });
 // //
 //     it('can have parent document be saved by calling save on a new(phantom) nested object', function (done) {
 //         var person = new Person({ name: 'Ralph', age: 30 }),
