@@ -5,17 +5,14 @@ Ext.define('CouchDB.data.Proxy', {
     constructor: function(config) {
         var databaseUrl = config.databaseUrl || '/';
         var databaseName = config.databaseName || 'your_database';
-        var designName = config.designName || 'your_design_name';
-        var viewName = config.viewName || 'your_view_name';
 
         this.restUrl = config.databaseUrl + '/' + databaseName;
-        this.viewUrl = config.databaseUrl + '/' + databaseName + '/_design/' + designName + '/_view/' + viewName;
 
         Ext.apply(config, {
             url: databaseUrl,
             api: {
                 create: this.restUrl,
-                read: this.viewUrl,
+                read: this.restUrl,
                 update: this.restUrl,
                 destroy: this.restUrl
             },
@@ -34,19 +31,15 @@ Ext.define('CouchDB.data.Proxy', {
     // This method is overridden to switch between loading a single object or executing a query using
     // a CouchDB view.
     read: function(operation) {
-        console.log('hi');
-        var extraParams ={
+        var extraParams = {
             'include_docs': true
-        }
+        };
         try {
 
             // CouchDB will include the entire document with the 'include_docs' parameter.
-            if (operation.id){
+            if (operation._id) {
                 this.api.read = this.restUrl;
                 this.appendId = true;
-            } else {
-                this.api.read = this.viewUrl;
-                this.appendId = false;
             }
 
             Ext.apply(this.extraParams, extraParams);

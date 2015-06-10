@@ -9,7 +9,7 @@ describe("CRUD Operations", function () {
     dbName = 'sencha_couch_test';
 
     Ext.define('Person', {
-        extend: 'CouchDB.data.NestedModel',
+        extend: 'CouchDB.data.Model',
         fields: [
             {
                 name: 'name',
@@ -28,35 +28,33 @@ describe("CRUD Operations", function () {
                 type: 'string'
             }
         ],
+        appendId: true,
         idProperty: '_id',
-        hasMany: ['Dog'],
         proxy: {
             type: 'couchdb',
             databaseUrl: dbUrl,
-            databaseName: dbName,
-            designName: 'test',
-            viewName: 'people'
+            databaseName: dbName
         }
 
     });
 
-    Ext.define('Dog', {
-        extend: 'Ext.data.Model',
-        validators: [{type: 'presence', field: 'name'}],
-        fields: [
-            {
-                name: 'name',
-                type: 'string',
-                mapping: 'first_name'
-            },
-            {
-                name: 'color',
-                type: 'string'
-            }
-        ],
-        belongsTo: ['Person']
-    });
-
+    //Ext.define('Dog', {
+    //    extend: 'Ext.data.Model',
+    //    validators: [{type: 'presence', field: 'name'}],
+    //    fields: [
+    //        {
+    //            name: 'name',
+    //            type: 'string',
+    //            mapping: 'first_name'
+    //        },
+    //        {
+    //            name: 'color',
+    //            type: 'string'
+    //        }
+    //    ],
+    //    belongsTo: ['Person']
+    //});
+    //
     store = Ext.create('Ext.data.Store', {
         storeId: 'testStore',
         model: 'Person'
@@ -66,87 +64,67 @@ describe("CRUD Operations", function () {
         var myDbName = dbName,
             myDbUrl = dbUrl;
 
-        PouchDB.destroy(myDbUrl + myDbName, function (err, info) {
-            var db = new PouchDB(myDbUrl + myDbName);
-            db.put({
-                "_id": "_design/test",
-                "language": "javascript",
-                "views": {
-                    "people": {
-                        "map": "function(doc) { emit(doc._id, null); };"
-                    }
-                }
-            }, function (err, response) {
-                expect(err).toBeNull();
+        PouchDB(myDbUrl + myDbName).destroy(function (err, info) {
+            new PouchDB(myDbUrl + myDbName,function(err, info) {
                 done();
             });
+
         });
     });
 
     afterEach(function (done) {
-        PouchDB.destroy(dbUrl + dbName, function (err, info) {
+        PouchDB(dbUrl + dbName).destroy(function (err, info) {
             expect(err).toBeNull();
             done();
         });
     });
 
-    // it('can create and load a new Model object', function (done) {
-    //     var id,
-    //         rev;
+     it('can create and load a new Model object', function (done) {
+         var id,
+             rev;
 
-    //     var person = new Person({ name: 'Ralph', age: 30 });
-    //     id = person.getId();
+         var person = new Person({ name: 'Ralph', age: 30 });
+         id = person.getId();
 
-    //     //expect(id).toBe('');
-    //     person.save({
-    //         callback: function (records,operation,success) {
-                
-    //             console.log('I was 1st.');
-    //             id = person.getId();
-    //             rev = person.get('_rev');
-    //             expect(id).toBeDefined();
-    //             expect(person.get('_id')).toBe(id);
-    //             expect(rev).toBeDefined();
-    //             expect(person.get('name')).toBe('Ralph');
-    //             expect(person.get('age')).toBe(30);
-    //             person = null;
-    //             done();
+         //expect(id).toBe('');
+         person.save({
+             success: function (records,operation,success) {
+                 id = person.getId();
+                 rev = person.get('_rev');
 
-    //             // Person.load(id, {
-    //             //     callback: function (person, operation) {
-    //             //         expect(person).toBeDefined();
-    //             //         expect(person.getId()).toBe(id);
-    //             //         expect(person.get('_id')).toBe(id);
-    //             //         expect(person.get('_rev')).toBe(rev);
-    //             //         expect(person.get('name')).toBe('Ralph');
-    //             //         expect(person.get('age')).toBe(30);
-    //             //         done();
-    //             //     }
-    //             // });
-    //         }
-    //     });
-    // });
+                 expect(id).toBeDefined();
+                 expect(person.get('_id')).toBe(id);
+                 expect(rev).toBeDefined();
+                 expect(person.get('name')).toBe('Ralph');
+                 expect(person.get('age')).toBe(30);
+                 person = null;
+                 done();
+             }
+         });
+     });
 
     it('can update an existing Model object', function (done) {
-        var id;
-        var rev;
+        var id,
+            rev;
 
-        var person = new Person({ name: 'Ralph', age: 31 });
+        var person = new Person({ name: 'Teddy', age: 31 });
         id = person.getId();
         person.save({
-            callback: function (records,operation,success) {
+            success: function (records,operation,success) {
+                console.log(success);
                 id = person.getId();
                 rev = person.get('_rev');
                 person = null;
                 expect(person).toBeNull();
+                console.log(id);
                 Person.load(id, {
-                    callback: function (record, operation) {
-                        done();
+                    success: function (record, operation) {
+
                         person = record;
                         person.set('name', 'Fred');
                         person.set('age', 21);
                         person.save({
-                            callback: function () {
+                            success: function () {
                                 person = null;
                                 Person.load(id, {
                                     callback: function (record, operation) {
@@ -168,32 +146,33 @@ describe("CRUD Operations", function () {
         });
     });
 // //
-    // it('can delete a Model object', function (done) {
-    //     var id,
-    //         person = new Person({ name: 'Ralph', age: 32 });
+     it('can delete a Model object', function (done) {
+         var id,
+             person = new Person({ name: 'Ralph', age: 32 });
 
-    //     person.save({
-    //         callback: function () {
-    //             id = person.getId();
-    //             person = null;
-    //             Person.load(id, {
-    //                 success: function (record, operation) {
-    //                     person = record;
-    //                     person.destroy({
-    //                         callback: function () {
-    //                             Person.load(id, {
-    //                                 callback: function (record, operation) {
-    //                                     expect(record).toBe(null);
-    //                                     done();
-    //                                 }
-    //                             });
-    //                         }
-    //                     });
-    //                 }
-    //             });
-    //         }
-    //     });
-    // });
+         person.save({
+             callback: function () {
+                 id = person.getId();
+                 person = null;
+                 Person.load(id, {
+                     success: function (record, operation) {
+                         person = record;
+                         person.erase({
+                             callback: function () {
+                                 Person.load(id, {
+                                     callback: function (record, operation) {
+                                         //should get a 404
+                                         expect(operation.error.status).toBe(404);
+                                         done();
+                                     }
+                                 });
+                             }
+                         });
+                     }
+                 });
+             }
+         });
+     });
 // //
 //     it('can load all Model objects using a Store', function (done) {
 //         var person1 = new Person({ name: 'Ralph', age: 33 }),
@@ -201,28 +180,28 @@ describe("CRUD Operations", function () {
 //             person3 = Ext.create('Person', { name: 'David', age: 53 }),
 //             allPeople = 0,
 //             addPerson;
-
+//
 //         person1.save({
 //             callback: function (person, request) {
 //                 store.add(person);
 //                 addPerson();
 //             }
 //         });
-
+//
 //         person2.save({
 //             callback: function (person, request) {
 //                 store.add(person);
 //                 addPerson();
 //             }
 //         });
-
+//
 //         person3.save({
 //             callback: function (person, request) {
 //                 store.add(person);
 //                 addPerson();
 //             }
 //         });
-
+//
 //         addPerson = function () {
 //             allPeople++;
 //             if (allPeople === 3) {

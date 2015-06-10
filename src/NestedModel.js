@@ -1,9 +1,9 @@
-Ext.define('CouchDB.data.NestedModel', {
+Ext.define('CouchDB.data.Model', {
     extend: 'Ext.data.Model',
-    alias: 'couchdb.nestedmodel',
+    alias: 'couchdb.model',
     save: function(options) {
         options = Ext.apply({}, options);
-        
+
         var me = this,
             phantom = me.phantom,
             dropped = me.dropped,
@@ -12,37 +12,26 @@ Ext.define('CouchDB.data.NestedModel', {
             callback = options.callback,
             proxy = me.getProxy(),
             operation;
-            
+
         options.records = [me];
-        //changing internalCallback to callback so we can so a callback first using internalCallback 
         options.internalCallback = function(operation) {
-            console.log('I was 2nd.');
-            // Errors will not have a response object.
-                
-                if (operation.wasSuccessful()) {
-                    record = operation._records[0];
-                    // For create, restore the preserved data and set the ID returned from CouchDB.
-
-                    if (operation.action == 'create') {
-                        record.set('_id',Ext.JSON.decode(operation.getResponse().responseText).id);
-                    }
-
-                    record.set('_rev',Ext.JSON.decode(operation.getResponse().responseText).rev);
-                    record.dirty = false;
-                      //      me.dirty = false;
-                    //me.editing = false;
-                    record.modified = {};
-                }
-                
-            // debugger;
-            //op.callback(op);
-            
-        };
-
-        options.callback = function(records,operation,success) {
             var args = [me, operation],
                 success = operation.wasSuccessful();
+
             if (success) {
+
+                //here we assign the _rev and _id response from CouchDB before any callbacks are called.
+                var record = operation._records[0];
+                var responseObj = Ext.util.JSON.decode(operation._response.responseText)
+
+                if (operation.getRequest().getAction() == 'create') {
+                    record.set('_id', responseObj.id);
+                }
+
+                record.set('_rev',responseObj.rev);
+                record.dirty = false;
+                delete record.modified;
+
                 Ext.callback(options.success, scope, args);
             } else {
                 Ext.callback(options.failure, scope, args);
@@ -50,8 +39,8 @@ Ext.define('CouchDB.data.NestedModel', {
             args.push(success);
             Ext.callback(callback, scope, args);
         };
-        // // delete options.callback;
-        
+        delete options.callback;
+
         operation = proxy.createOperation(action, options);
 
         // Not a phantom, then we must perform this operation on the remote datasource.

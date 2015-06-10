@@ -7,39 +7,38 @@ Ext.define('CouchDB.data.Reader', {
     successProperty: 'ok',
     totalProperty: 'total_rows',
 
-    readRecords: function(data, readOptions) {
-        var me = this,
-            meta;
-          
-        console.log(data);  
-        //this has to be before the call to super because we use the meta data in the superclass readRecords
-        if (me.getMeta) {
-            meta = me.getMeta(data);
-            if (meta) {
-                me.onMetaChange(meta);
-            }
-        } else if (data.metaData) {
-            me.onMetaChange(data.metaData);
-        }
-        return this.callParent(arguments);
-    },
-    // transform: {
-    //     fn: function(data) {
-    //         console.log('hi');
-    //         data = data[0];
-    //         debugger;
-    //         // do some manipulation of the unserialized data object
-    //         if (!Ext.isDefined(data.rows)) {
-    //             var wrappedData = {
-    //                 rows: [{ doc: data }]
-    //             };
-    //             return wrappedData;
-    //         } else {
-    //             return data
-    //         }
-    //     },
-    //     scope: this
-    // },
+    //readRecords: function(data, readOptions, /* private */ internalReadOptions) {
+    //    var me = this,
+    //        meta;
+    //
+    //    //this has to be before the call to super because we use the meta data in the superclass readRecords
+    //    if (me.getMeta) {
+    //        meta = me.getMeta(data);
+    //        if (meta) {
+    //            me.onMetaChange(meta);
+    //        }
+    //    } else if (data.metaData) {
+    //        me.onMetaChange(data.metaData);
+    //    }
+    //
+    //    return me.callParent([data, readOptions, internalReadOptions]);
+    //},
+     transform: {
+         fn: function(data) {
+             //data = data[0];
+             //debugger;
+             //// do some manipulation of the unserialized data object
+             if (Ext.isDefined(data) && !Ext.isDefined(data.rows)) {
+                 var wrappedData = {
+                     rows: [{ doc: data }]
+                 };
+                 return wrappedData;
+             } else {
+                 return data
+             }
+         },
+         scope: this
+     },
     // read: function(response, readOptions) {
     //     var data, result;
     //     if (response) {
