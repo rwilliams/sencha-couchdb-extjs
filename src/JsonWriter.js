@@ -1,7 +1,6 @@
 Ext.define('CouchDB.data.Writer', {
     extend: 'Ext.data.writer.Json',
     alias: 'writer.couchdb',
-
     allowSingle: true,
     encode: false,
     writeAllFields: true,
@@ -9,11 +8,7 @@ Ext.define('CouchDB.data.Writer', {
     clientIdProperty: '_id',
     transform: {
         fn: function(data,request) {
-
-            Ext.Object.each(request._records[0].getAssociatedData(), function(key, value, myself) {
-                data[key] = value;
-            });
-
+            request.getRecords()[0].getAssociatedData(data);
             return data;
         },
         scope: this
