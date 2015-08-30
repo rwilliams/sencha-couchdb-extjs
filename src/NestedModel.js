@@ -4,7 +4,10 @@ Ext.define('CouchDB.data.Model', {
     save: function(options) {
         options = Ext.apply({}, options);
 
+
+
         var me = this,
+            childRecord = false,
             phantom = me.phantom,
             dropped = me.dropped,
             action = dropped ? 'destroy' : (phantom ? 'create' : 'update'),
@@ -12,6 +15,25 @@ Ext.define('CouchDB.data.Model', {
             callback = options.callback,
             proxy = me.getProxy(),
             operation;
+
+
+        //check to see if this is a parent association; if it isn't call the parent save method.
+        if (!Ext.Object.isEmpty(me.associations)){
+            Ext.iterate(me.associations, function(k,v){
+                var parent;
+                if(!me.associations[k].left){
+                    parent = me[me.associations[k].getterName]()
+                    parent.save(options);
+                    childRecord = true;
+                    return false;
+                }
+            });
+        }
+
+        if (childRecord){
+            return;
+        }
+
 
         options.records = [me];
         options.internalCallback = function(operation) {
