@@ -1,15 +1,8 @@
 describe("CRUD Operations", function () {
-    var store,
-        dbUrl,
-        dbName;
-
-    //Set your database and database url here
-    //
-    dbUrl = 'http://localhost:3000';
-    dbName = 'sencha_couch_test';
+    var store;
 
     Ext.define('Person', {
-        extend: 'CouchDB.data.Model',
+        extend: 'Ext.data.model.CouchDB',
         fields: [
             {
                 name: 'name',
@@ -31,15 +24,16 @@ describe("CRUD Operations", function () {
         appendId: true,
         idProperty: '_id',
         proxy: {
-            type: 'couchdb',
-            databaseUrl: dbUrl,
-            databaseName: dbName
+            type: 'pouchdb',
+            id: 'sencha_couch_test'
         }
 
     });
 
+
+
     Ext.define('Dog', {
-        extend: 'CouchDB.data.Model',
+        extend: 'Ext.data.model.CouchDB',
         validators: [{type: 'presence', field: 'name'}],
         fields: [
             {
@@ -60,8 +54,9 @@ describe("CRUD Operations", function () {
         ]
 
     });
+
     Ext.define('Cat', {
-        extend: 'CouchDB.data.Model',
+        extend: 'Ext.data.model.CouchDB',
         validators: [{type: 'presence', field: 'name'}],
         fields: [
             {
@@ -88,11 +83,9 @@ describe("CRUD Operations", function () {
     });
 
     beforeEach(function (done) {
-        var myDbName = dbName,
-            myDbUrl = dbUrl;
 
-        PouchDB(myDbUrl + myDbName).destroy(function (err, info) {
-            new PouchDB(myDbUrl + myDbName,function(err, info) {
+        PouchDB('sencha_couch_test').destroy(function (err, info) {
+            new PouchDB('sencha_couch_test',function(err, info) {
                 done();
             });
 
@@ -100,171 +93,160 @@ describe("CRUD Operations", function () {
     });
 
     afterEach(function (done) {
-        PouchDB(dbUrl + dbName).destroy(function (err, info) {
+        PouchDB('sencha_couch_test').destroy(function (err, info) {
             expect(err).toBeNull();
             done();
         });
     });
 
-//     it('can create and load a new Model object', function (done) {
-//         var id,
-//             rev;
+     it('can create and load a new Model object', function (done) {
+         var id,
+             rev;
+
+         var person = new Person({ name: 'Ralph', age: 30 });
+         id = person.getId();
+
+         //expect(id).toBe('');
+         person.save({
+             success: function (record,operation,success) {
+                 id = record.getId();
+                 rev = record.get('_rev');
+
+                 expect(id).toBeDefined();
+                 expect(record.get('_id')).toBe(id);
+                 expect(rev).toBeDefined();
+                 expect(record.get('name')).toBe('Ralph');
+                 expect(record.get('age')).toBe(30);
+                 record = null;
+                 done();
+             }
+         });
+     });
 //
-//         var person = new Person({ name: 'Ralph', age: 30 });
-//         id = person.getId();
-//
-//         //expect(id).toBe('');
-//         person.save({
-//             success: function (records,operation,success) {
-//                 id = person.getId();
-//                 rev = person.get('_rev');
-//
-//                 expect(id).toBeDefined();
-//                 expect(person.get('_id')).toBe(id);
-//                 expect(rev).toBeDefined();
-//                 expect(person.get('name')).toBe('Ralph');
-//                 expect(person.get('age')).toBe(30);
-//                 person = null;
-//                 done();
-//             }
-//         });
-//     });
-////
-//    it('can update an existing Model object', function (done) {
-//        var id,
-//            rev;
-//
-//        var person = new Person({ name: 'Teddy', age: 31 });
-//        id = person.getId();
-//        person.save({
-//            success: function (records,operation,success) {
-//                console.log(success);
-//                id = person.getId();
-//                rev = person.get('_rev');
-//                person = null;
-//                expect(person).toBeNull();
-//                console.log(id);
-//                Person.load(id, {
-//                    success: function (record, operation) {
-//
-//                        person = record;
-//                        person.set('name', 'Fred');
-//                        person.set('age', 21);
-//                        person.save({
-//                            success: function () {
-//                                person = null;
-//                                Person.load(id, {
-//                                    callback: function (record, operation) {
-//                                        person = record;
-//                                        expect(person).toBeDefined();
-//                                        expect(person.getId()).toBe(id);
-//                                        expect(person.get('_rev')).toBeDefined();
-//                                        expect(person.get('_rev')).not.toBe(rev);
-//                                        expect(person.get('name')).toBe('Fred');
-//                                        expect(person.get('age')).toBe(21);
-//                                        done();
-//                                    }
-//                                });
-//                            }
-//                        });
-//                    }
-//                });
-//            }
-//        });
-//    });
+    it('can update an existing Model object', function (done) {
+
+        var person = Ext.create('Person',{ name: 'Teddy', age: 31, _id:'dudes' });
+        person.save({
+            success: function (record3,operation,success) {
+                Person.load(record3.getId(), {
+                    scope: this,
+                    success: function (record, operation) {
+                        record.set('name', 'Fred');
+                        record.set('age', 21);
+                        record.save({
+                            success: function (record1) {
+                                Person.load(record1.getId(), {
+                                    success: function (record2, operation) {
+                                        expect(record2).toBeDefined();
+                                        expect(record2.get('_rev')).toBeDefined();
+                                        expect(record2.get('name')).toBe('Fred');
+                                        expect(record2.get('age')).toBe(21);
+                                        done();
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    });
 ////// //
-//     it('can delete a Model object', function (done) {
-//         var id,
-//             person = new Person({ name: 'Ralph', age: 32 });
-//
-//         person.save({
-//             callback: function () {
-//                 id = person.getId();
-//                 person = null;
-//                 Person.load(id, {
-//                     success: function (record, operation) {
-//                         person = record;
-//                         person.erase({
-//                             callback: function () {
-//                                 Person.load(id, {
-//                                     callback: function (record, operation) {
-//                                         //should get a 404
-//                                         expect(operation.error.status).toBe(404);
-//                                         done();
-//                                     }
-//                                 });
-//                             }
-//                         });
-//                     }
-//                 });
-//             }
-//         });
-//     });
+     it('can delete a Model object', function (done) {
+         var id,
+             person = new Person({ name: 'Ralph', age: 32 });
+
+         person.save({
+             callback: function () {
+                 id = person.getId();
+                 person = null;
+                 Person.load(id, {
+                     success: function (record, operation) {
+                         person = record;
+                         person.erase({
+                             callback: function () {
+                                 Person.load(id, {
+                                     callback: function (record, operation) {
+                                         //should get a 404
+                                         expect(operation.error).toBe('not_found');
+                                         done();
+                                     }
+                                 });
+                             }
+                         });
+                     }
+                 });
+             }
+         });
+     });
 ////// //
-//     it('can load all Model objects using a Store', function (done) {
-//         var person1 = new Person({ name: 'Ralph', age: 33 }),
-//             person2 = Ext.create('Person', { name: 'Jane', age: 43 }),
-//             person3 = Ext.create('Person', { name: 'David', age: 53 }),
-//             allPeople = 0,
-//             addPerson;
+     it('can load all Model objects using a Store', function (done) {
+         var person1 = new Person({ name: 'Ralph', age: 33 }),
+             person2 = Ext.create('Person', { name: 'Jane', age: 43 }),
+             person3 = Ext.create('Person', { name: 'David', age: 53 }),
+             allPeople = 0,
+             addPerson;
+
+         person1.save({
+             success: function (person, request) {
+                 store.add(person);
+                 addPerson();
+             }
+         });
+
+         person2.save({
+             success: function (person, request) {
+                 store.add(person);
+                 addPerson();
+             }
+         });
+
+         person3.save({
+             success: function (person, request) {
+                 store.add(person);
+                 addPerson();
+             }
+         });
+
+         addPerson = function () {
+             allPeople++;
+             if (allPeople === 3) {
+                 expect(store.getRange().length).toBe(3);
+                 done();
+             }
+         };
+     });
 //
-//         person1.save({
-//             success: function (person, request) {
-//                 store.add(person);
-//                 addPerson();
-//             }
-//         });
-//
-//         person2.save({
-//             success: function (person, request) {
-//                 store.add(person);
-//                 addPerson();
-//             }
-//         });
-//
-//         person3.save({
-//             success: function (person, request) {
-//                 store.add(person);
-//                 addPerson();
-//             }
-//         });
-//
-//         addPerson = function () {
-//             allPeople++;
-//             if (allPeople === 3) {
-//                 expect(store.getRange().length).toBe(3);
-//                 done();
-//             }
-//         };
-//     });
-//
-//     it('can read and write nested data', function (done) {
-//         var person = new Person({ name: 'Ralph', age: 30 }),
-//             dog = new Dog({color: 'Yellow', name: 'Fido'}),
-//             cat = new Cat({color: 'Brown', name: 'Felix'});
-//
-//         dog.cats().add(cat);
-//         person.dogs().add(dog);
-//         person.save({
-//             success: function (person, request) {
-//                 Person.load(person.getId(), {
-//                     callback: function (person, operation) {
-//                         var dog,
-//                             cat;
-//                         dog = person.dogs().getAt(0);
-//                         cat = dog.cats().getAt(0);
-//                         expect(dog.get('color')).toBe('Yellow');
-//                         expect(dog.get('name')).toBe('Fido');
-//                         expect(cat.get('color')).toBe('Brown');
-//                         expect(cat.get('name')).toBe('Felix');
-//                         done();
-//                     }
-//                 });
-//                 //done();
-//             }
-//         });
-//     });
-// //
+     it('can read and write nested data', function (done) {
+         var person = Ext.create('Person',{ name: 'Ralph', age: 30,_id:'test' }),
+             dog = Ext.create('Dog',{color: 'Yellow', name: 'Fido',person_id:'test'}),
+             cat = Ext.create('Cat',{color: 'Brown', name: 'Felix'});
+
+         dog.cats().add(cat);
+         person.dogs().add(dog);
+         person.save({
+             scope:this,
+             success: function (record, request) {
+
+                 Person.load(record.getId(), {
+                     scope: this,
+                     success: function (record2, operation) {
+                         var dog,
+                             cat;
+                         dog = record2.dogs().getAt(0);
+                         cat = dog.cats().getAt(0);
+                         expect(dog.get('color')).toBe('Yellow');
+                         expect(dog.get('name')).toBe('Fido');
+                         expect(cat.get('color')).toBe('Brown');
+                         expect(cat.get('name')).toBe('Felix');
+                         done();
+                     }
+                 });
+                 //done();
+             }
+         });
+     });
+//// //
      it('can have parent document be saved by calling save on a new(phantom) nested object', function (done) {
          var person = new Person({ name: 'Ralph', age: 30 }),
              dog = new Dog({color: 'Yellow', name: 'Fido'});
@@ -274,10 +256,8 @@ describe("CRUD Operations", function () {
          //in order to save a phantom record innerOf must be set manually. I can't figure out a good way to do this in the lib itself.
          dog.save({
              callback: function (person, request) {
-                 debugger;
                  Person.load(person.getId(), {
                      callback: function (person, operation) {
-                         debugger;
                          expect(person.dogs().first().get('color')).toBe('Yellow');
                          expect(person.dogs().first().get('name')).toBe('Fido');
                          done();
@@ -301,7 +281,6 @@ describe("CRUD Operations", function () {
                          dog = person.dogs().first();
                          dog.save({
                              callback: function(person, operation){
-                                 debugger;
                                  expect(person.dogs().first().get('color')).toBe('Yellow');
                                  expect(person.dogs().first().get('name')).toBe('Fido');
                                  done();
@@ -313,17 +292,17 @@ describe("CRUD Operations", function () {
              }
          });
      });
-// //
-//     it('will be marked invalid if nested data is invalid and valid if the nested data is valid', function (done) {
-//         var personInvalid = new Person({ name: 'InValid', age: 35 }),
-//             personValid = new Person({ name: 'Valid', age: 30 }),
-//             dogValid = new Dog({color: 'Yellow',name:'valid'}),
-//             dogInvalid = new Dog({color: 'Yellow',name:''});
-
-//         personInvalid.dogs().add(dogInvalid);
-//         personValid.dogs().add(dogValid);
-//         expect(personInvalid.isValid()).toBeFalsy();
-//         expect(personValid.isValid()).toBeTruthy();
-//         done();
-//     });
+ //
+ //    it('will be marked invalid if nested data is invalid and valid if the nested data is valid', function (done) {
+ //        var personInvalid = new Person({ name: 'InValid', age: 35 }),
+ //            personValid = new Person({ name: 'Valid', age: 30 }),
+ //            dogValid = new Dog({color: 'Yellow',name:'valid'}),
+ //            dogInvalid = new Dog({color: 'Yellow',name:''});
+ //
+ //        personInvalid.dogs().add(dogInvalid);
+ //        personValid.dogs().add(dogValid);
+ //        expect(personInvalid.isValid()).toBeFalsy();
+ //        expect(personValid.isValid()).toBeTruthy();
+ //        done();
+ //    });
 });

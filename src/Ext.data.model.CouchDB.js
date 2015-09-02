@@ -1,10 +1,8 @@
-Ext.define('CouchDB.data.Model', {
+Ext.define('Ext.data.model.CouchDB', {
     extend: 'Ext.data.Model',
-    alias: 'couchdb.model',
+    alias: 'model.couchdb',
     save: function(options) {
         options = Ext.apply({}, options);
-
-
 
         var me = this,
             childRecord = false,
@@ -16,8 +14,7 @@ Ext.define('CouchDB.data.Model', {
             proxy = me.getProxy(),
             operation;
 
-
-        //check to see if this is a parent association; if it isn't call the parent save method.
+        //check to see if this is a parent association; if it isn't call the parent record save method.
         if (!Ext.Object.isEmpty(me.associations)){
             Ext.iterate(me.associations, function(k,v){
                 var parent;
@@ -34,26 +31,11 @@ Ext.define('CouchDB.data.Model', {
             return;
         }
 
-
         options.records = [me];
         options.internalCallback = function(operation) {
             var args = [me, operation],
                 success = operation.wasSuccessful();
-
             if (success) {
-
-                //here we assign the _rev and _id response from CouchDB before any callbacks are called.
-                var record = operation._records[0];
-                var responseObj = Ext.util.JSON.decode(operation._response.responseText)
-
-                if (operation.getRequest().getAction() == 'create') {
-                    record.set('_id', responseObj.id);
-                }
-
-                record.set('_rev',responseObj.rev);
-                record.dirty = false;
-                delete record.modified;
-
                 Ext.callback(options.success, scope, args);
             } else {
                 Ext.callback(options.failure, scope, args);
